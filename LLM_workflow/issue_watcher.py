@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Any
 
 import pyperclip
 import requests
@@ -17,6 +18,33 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 POLL_INTERVAL = 10  # Poll interval in seconds
 CLIPBOARD_VERIFY_DELAY = 10  # Verify clipboard content N seconds after copy
 CLIPBOARD_VERIFY_RETRIES = 2  # Additional retries if verification fails
+ONLY_GEMINI_ISSUES = os.environ.get("ONLY_GEMINI_ISSUES", "true").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+# Gemini-issued work selectors. At least one of these should match.
+GEMINI_ISSUE_LABELS = {
+    item.strip().lower()
+    for item in os.environ.get(
+        "GEMINI_ISSUE_LABELS", "ai-review,from-gemini"
+    ).split(",")
+    if item.strip()
+}
+GEMINI_TITLE_MARKERS = [
+    item.strip().lower()
+    for item in os.environ.get(
+        "GEMINI_TITLE_MARKERS", "[ai review request],gemini"
+    ).split(",")
+    if item.strip()
+]
+GEMINI_AUTHOR_MARKERS = [
+    item.strip().lower()
+    for item in os.environ.get("GEMINI_AUTHOR_MARKERS", "gemini").split(",")
+    if item.strip()
+]
 
 
 def get_latest_issues():
@@ -41,11 +69,51 @@ def get_latest_issues():
         return []
 
 
+def _normalize_text(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _extract_label_names(issue: dict[str, Any]) -> set[str]:
+    labels = issue.get("labels", [])
+    names: set[str] = set()
+    if not isinstance(labels, list):
+        return names
+
+    for label in labels:
+        if isinstance(label, dict):
+            name = _normalize_text(label.get("name"))
+        else:
+            name = _normalize_text(label)
+        if name:
+            names.add(name)
+    return names
+
+
+def is_gemini_issue(issue: dict[str, Any]) -> tuple[bool, str]:
+    title = _normalize_text(issue.get("title"))
+    author = _normalize_text(issue.get("user", {}).get("login"))
+    labels = _extract_label_names(issue)
+
+    if GEMINI_ISSUE_LABELS and labels.intersection(GEMINI_ISSUE_LABELS):
+        return True, "label"
+
+    if any(marker in title for marker in GEMINI_TITLE_MARKERS):
+        return True, "title"
+
+    if any(marker in author for marker in GEMINI_AUTHOR_MARKERS):
+        return True, "author"
+
+    return False, ""
+
+
 def build_chat_prompt(issue_number, title, body):
     """Build a Codex-ready prompt for a GitHub issue."""
     issue_body = body or "No description provided."
     return (
         "Please write code to resolve the following GitHub issue.\n"
+        "Workflow policy:\n"
+        "- Codex (GPT) handles code changes, commit, and push to main.\n"
+        "- Gemini reads pushed commits and creates follow-up review issues.\n"
         "This task should be done with direct commit/push to the main branch (no Pull Request).\n"
         "After applying the code changes, also provide terminal commands "
         "(git add, git commit, git push origin main).\n\n"
@@ -95,6 +163,8 @@ def main_loop():
         f"[WATCHER] New issue prompts are verified after "
         f"{CLIPBOARD_VERIFY_DELAY} seconds."
     )
+    if ONLY_GEMINI_ISSUES:
+        print("[WATCHER] Gemini-only mode is ON.")
     print("Press Ctrl+C to stop.")
     print("=" * 60)
 
@@ -121,29 +191,36 @@ def main_loop():
                 if "pull_request" in issue:
                     continue
 
-                # Handle only newly discovered issues.
-                if issue_number not in seen_issues:
-                    seen_issues.add(issue_number)
+                if issue_number in seen_issues:
+                    continue
 
-                    title = issue.get("title")
-                    body = issue.get("body")
+                seen_issues.add(issue_number)
+                title = issue.get("title")
+                body = issue.get("body")
 
-                    # Build a Codex-ready prompt and copy it to clipboard.
-                    chat_prompt = build_chat_prompt(issue_number, title, body)
+                if ONLY_GEMINI_ISSUES:
+                    matched, reason = is_gemini_issue(issue)
+                    if not matched:
+                        print(f"[SKIP] #{issue_number} - {title} (not Gemini-issued)")
+                        continue
+                    print(f"[MATCH] #{issue_number} - {title} (matched by {reason})")
+                else:
+                    print(f"[NEW ISSUE] #{issue_number} - {title}")
 
-                    print(f"\n[NEW ISSUE] #{issue_number} - {title}")
+                # Build a Codex-ready prompt and copy it to clipboard.
+                chat_prompt = build_chat_prompt(issue_number, title, body)
 
-                    # Copy prompt and verify that clipboard keeps the same content.
-                    if copy_and_verify_prompt(chat_prompt):
-                        print(
-                            "[OK] Prompt copied and verified in clipboard. "
-                            "Paste it into ChatGPT Pro (Codex) with Ctrl+V."
-                        )
-                    else:
-                        print(
-                            "[WARN] Prompt copy could not be verified. "
-                            "You can retry or copy manually from logs."
-                        )
+                # Copy prompt and verify that clipboard keeps the same content.
+                if copy_and_verify_prompt(chat_prompt):
+                    print(
+                        "[OK] Prompt copied and verified in clipboard. "
+                        "Paste it into ChatGPT Pro (Codex) with Ctrl+V."
+                    )
+                else:
+                    print(
+                        "[WARN] Prompt copy could not be verified. "
+                        "You can retry or copy manually from logs."
+                    )
 
             # Wait until the next polling cycle.
             time.sleep(POLL_INTERVAL)
