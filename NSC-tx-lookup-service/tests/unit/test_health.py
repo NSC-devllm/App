@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.api.constants import SERVICE_NAME, SERVICE_VERSION
 from src.api.health import router as health_router
 
 
@@ -16,6 +17,6 @@ def test_health_endpoint_returns_expected_payload() -> None:
     assert response.status_code == 200
     assert response.json() == {
         "status": "healthy",
-        "service": "nsc-tx-lookup-service",
-        "version": "0.1.0",
+        "service": SERVICE_NAME,
+        "version": SERVICE_VERSION,
     }

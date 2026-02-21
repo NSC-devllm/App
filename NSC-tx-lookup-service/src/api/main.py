@@ -11,6 +11,7 @@ from src.api.constants import (
     ADMIN_ORDER_LOOKUP,
     ADMIN_TX_LOOKUP,
     ADMIN_WALLET_TX_LOOKUP,
+    SERVICE_VERSION,
 )
 from src.api.health import router as health_router
 from src.api.observability import register_observability
@@ -38,7 +39,7 @@ app = FastAPI(
         "관리자용 거래 조회 API. "
         "원장 엔트리 기반 tx_id 조회와 PAYMENT/RECEIVE 페어링 정보를 제공합니다."
     ),
-    version="0.1.0",
+    version=SERVICE_VERSION,
     openapi_tags=[
         {
             "name": "Admin Transaction",
