@@ -14,6 +14,7 @@ def test_load_config_defaults():
     assert config.dlq_backend == "file"
     assert config.db_pool_size == 5
     assert config.log_level == "INFO"
+    assert config.service_name == "nsc-tx-lookup-service"
 
 
 def test_load_config_invalid_app_env():
