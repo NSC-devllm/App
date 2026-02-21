@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import logging
 import time
+from urllib.parse import parse_qsl, urlencode
 
 from fastapi import FastAPI, Request
 
+from src.common.config import load_config
 from src.common.metrics import (
     API_REQUESTS_INFLIGHT,
     observe_api_request,
@@ -25,10 +27,34 @@ def _resolve_route_template(request: Request) -> str:
     return "unmatched"
 
 
+def _mask_query_for_log(query: str) -> str:
+    if not query:
+        return "-"
+
+    config = load_config()
+    sensitive = {
+        key.strip().lower()
+        for key in config.audit_mask_query_keys.split(",")
+        if key.strip()
+    }
+    if not sensitive:
+        return query
+
+    pairs = parse_qsl(query, keep_blank_values=True)
+    masked = []
+    for key, value in pairs:
+        if key.lower() in sensitive:
+            masked.append((key, "***"))
+        else:
+            masked.append((key, value))
+
+    return urlencode(masked) or "-"
+
+
 def _request_context(request: Request) -> tuple[str, str, str, str, str]:
     method = request.method
     path = request.url.path
-    query = request.url.query or "-"
+    query = _mask_query_for_log(request.url.query)
     client_ip = request.client.host if request.client is not None else "-"
     user_agent = request.headers.get("user-agent", "-")
     return method, path, query, client_ip, user_agent
@@ -36,12 +62,22 @@ def _request_context(request: Request) -> tuple[str, str, str, str, str]:
 
 def register_observability(app: FastAPI) -> None:
     @app.middleware("http")
-    async def correlation_middleware(request: Request, call_next):
-        incoming = request.headers.get(CORRELATION_ID_HEADER)
-        with correlation_context(incoming):
+    async def metrics_middleware(request: Request, call_next):
+        method = request.method
+        route = _resolve_route_template(request)
+        API_REQUESTS_INFLIGHT.add(1, attributes={"method": method, "route": route})
+        start = time.perf_counter()
+        status_code = 500
+        try:
             response = await call_next(request)
-            response.headers[CORRELATION_ID_HEADER] = get_correlation_id()
+            status_code = response.status_code
             return response
+        finally:
+            duration = time.perf_counter() - start
+            observe_api_request(method, route, status_code, duration)
+            API_REQUESTS_INFLIGHT.add(
+                -1, attributes={"method": method, "route": route}
+            )
 
     @app.middleware("http")
     async def logging_middleware(request: Request, call_next):
@@ -72,19 +108,9 @@ def register_observability(app: FastAPI) -> None:
             )
 
     @app.middleware("http")
-    async def metrics_middleware(request: Request, call_next):
-        method = request.method
-        route = _resolve_route_template(request)
-        API_REQUESTS_INFLIGHT.add(1, attributes={"method": method, "route": route})
-        start = time.perf_counter()
-        status_code = 500
-        try:
+    async def correlation_middleware(request: Request, call_next):
+        incoming = request.headers.get(CORRELATION_ID_HEADER)
+        with correlation_context(incoming):
             response = await call_next(request)
-            status_code = response.status_code
+            response.headers[CORRELATION_ID_HEADER] = get_correlation_id()
             return response
-        finally:
-            duration = time.perf_counter() - start
-            observe_api_request(method, route, status_code, duration)
-            API_REQUESTS_INFLIGHT.add(
-                -1, attributes={"method": method, "route": route}
-            )
