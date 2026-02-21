@@ -12,6 +12,7 @@ from src.api.constants import (
     ADMIN_TX_LOOKUP,
     ADMIN_WALLET_TX_LOOKUP,
 )
+from src.api.health import router as health_router
 from src.api.observability import register_observability
 from src.api.schemas import AdminOrderResponse, AdminTxResponse, AdminWalletTxResponse
 from src.api.service import (
@@ -45,6 +46,7 @@ app = FastAPI(
         },
     ],
 )
+app.include_router(health_router)
 register_observability(app)
 
 
