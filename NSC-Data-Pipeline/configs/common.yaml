@@ -1,0 +1,34 @@
+project:
+  name: data-pipeline
+  timezone: Asia/Seoul
+
+databricks:
+  catalog: null
+
+run_defaults:
+  run_mode: incremental
+  start_ts: null
+  end_ts: null
+  date_kst_start: null
+  date_kst_end: null
+
+pipeline_state:
+  table: gold.pipeline_state
+  success:
+    update_last_success_ts: true
+    update_last_processed_end: true
+    update_last_run_id: true
+  failure:
+    keep_last_success_ts: true
+    keep_last_processed_end: true
+    update_last_run_id: true
+
+workflows:
+  max_retries: 2
+  retry_interval_seconds: 300
+  email_notifications:
+    - 2dt026@msacademy.msai.kr
+
+analytics:
+  secret_key: salt_user_key
+  local_dummy_salt_env: ANON_USER_KEY_SALT

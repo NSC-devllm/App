@@ -1,0 +1,23 @@
+environment: dev
+
+databricks:
+  workspace_host: https://adb-1234567890123456.7.azuredatabricks.net
+  workspace_id: "57710310442212"
+  catalog: 2dt_final_team4_databricks_test
+  bronze_schema: bronze
+  silver_schema: silver
+  gold_schema: gold
+  cluster_policy_id: "00023C6641CF09E4"
+  existing_cluster_id: null
+
+storage:
+  external_location: team4_adls_test
+  base_path: abfss://2dt-final-team4-adls-test@2dtfinalteam4storagetest.dfs.core.windows.net
+
+analytics:
+  secret_scope: ledger-analytics-dev
+
+jobs:
+  pipeline_a_job_id: "57710310442212"
+  pipeline_b_job_id: null
+  pipeline_c_job_id: null

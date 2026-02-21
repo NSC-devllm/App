@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "network": "giwaSepolia",
+  "chainId": 91342,
+  "confirmations": 12,
+  "startBlock": 17798958,
+  "dedupKeyFormat": "chainId:txHash:logIndex",
+  "unknownEventPolicy": "DLQ",
+  "filters": {
+    "addresses": [
+      "0x336Ff3629dE73804bad107d6291cD54EC538E7a3",
+      "0x7063D25b17FC4df908531EC7B9f7D9041ADDDbdc",
+      "0x013f975053770387633caB552311DA591F75692F",
+      "0x516Ff79Fa012e2BF965b2c187470B961b5eba529",
+      "0x364efa0edc35e2a49D6f112F6CaE28e9Cc51e8C3"
+    ],
+    "topic0": [
+      "0x442a7cc6ec72ebe78ba025bf9ad575cb92451adad7457d004125cd5fcd8395af",
+      "0xc41d93b8bfbf9fd7cf5bfe271fd649ab6a6fec0ea101c23b82a2a28eca2533a9",
+      "0x460ce49faebaba1c0cd745e325add52dfd408164ec39a634ff2ece24921da8d7",
+      "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+      "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+      "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+      "0xb2380d12cef9916c80092a0fbf65d787f06a929486c615ac59893cf20ad57090",
+      "0x7c149ab40e3e14168d14b835bb02a87be51cfa74a799a5ca8a5e42e57fbb70bf",
+      "0xea03842136749c1372265e6fee51e18b42777736266608e9556ab5451d20816a",
+      "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31",
+      "0x6741b2fc379fad678116fe3d4d4b9a1a184ab53ba36b86ad0fa66340b1ab41ad",
+      "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb",
+      "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62",
+      "0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b",
+      "0x18d0e1ae5bdf2098041611baef18c4ada183c76f399411b88a47041249016d09",
+      "0xa7f425b98d4d6af1e1f4a6d74317b14c0d4b822c1dff9a66104fe1ff95d90c1e"
+    ]
+  },
+  "events": [
+    {
+      "id": "market.listed",
+      "contract": "FixedPriceMarketDvP",
+      "address": "0x364efa0edc35e2a49D6f112F6CaE28e9Cc51e8C3",
+      "signature": "Listed(uint256,address,address,uint256,address,uint256,uint256)",
+      "topic0": "0x460ce49faebaba1c0cd745e325add52dfd408164ec39a634ff2ece24921da8d7",
+      "enabled": true
+    },
+    {
+      "id": "market.bought",
+      "contract": "FixedPriceMarketDvP",
+      "address": "0x364efa0edc35e2a49D6f112F6CaE28e9Cc51e8C3",
+      "signature": "Bought(uint256,address,address,address,uint256,address,uint256,uint256,uint256)",
+      "topic0": "0x442a7cc6ec72ebe78ba025bf9ad575cb92451adad7457d004125cd5fcd8395af",
+      "enabled": true
+    },
+    {
+      "id": "market.cancelled",
+      "contract": "FixedPriceMarketDvP",
+      "address": "0x364efa0edc35e2a49D6f112F6CaE28e9Cc51e8C3",
+      "signature": "Cancelled(uint256)",
+      "topic0": "0xc41d93b8bfbf9fd7cf5bfe271fd649ab6a6fec0ea101c23b82a2a28eca2533a9",
+      "enabled": true
+    },
+    {
+      "id": "mockusd.transfer",
+      "contract": "MockUSD",
+      "address": "0x336Ff3629dE73804bad107d6291cD54EC538E7a3",
+      "signature": "Transfer(address,address,uint256)",
+      "topic0": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+      "enabled": true
+    },
+    {
+      "id": "mockusd.approval",
+      "contract": "MockUSD",
+      "address": "0x336Ff3629dE73804bad107d6291cD54EC538E7a3",
+      "signature": "Approval(address,address,uint256)",
+      "topic0": "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+      "enabled": true
+    },
+    {
+      "id": "mockusd.ownership_transferred",
+      "contract": "MockUSD",
+      "address": "0x336Ff3629dE73804bad107d6291cD54EC538E7a3",
+      "signature": "OwnershipTransferred(address,address)",
+      "topic0": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+      "enabled": true
+    },
+    {
+      "id": "registry.class_registered",
+      "contract": "PropertyRegistry",
+      "address": "0x7063D25b17FC4df908531EC7B9f7D9041ADDDbdc",
+      "signature": "ClassRegistered(bytes32,uint256,uint32,bytes32)",
+      "topic0": "0xb2380d12cef9916c80092a0fbf65d787f06a929486c615ac59893cf20ad57090",
+      "enabled": true
+    },
+    {
+      "id": "registry.class_status_changed",
+      "contract": "PropertyRegistry",
+      "address": "0x7063D25b17FC4df908531EC7B9f7D9041ADDDbdc",
+      "signature": "ClassStatusChanged(bytes32,uint8)",
+      "topic0": "0x7c149ab40e3e14168d14b835bb02a87be51cfa74a799a5ca8a5e42e57fbb70bf",
+      "enabled": true
+    },
+    {
+      "id": "registry.doc_hash_updated",
+      "contract": "PropertyRegistry",
+      "address": "0x7063D25b17FC4df908531EC7B9f7D9041ADDDbdc",
+      "signature": "DocHashUpdated(bytes32,bytes32,bytes32)",
+      "topic0": "0xea03842136749c1372265e6fee51e18b42777736266608e9556ab5451d20816a",
+      "enabled": true
+    },
+    {
+      "id": "registry.ownership_transferred",
+      "contract": "PropertyRegistry",
+      "address": "0x7063D25b17FC4df908531EC7B9f7D9041ADDDbdc",
+      "signature": "OwnershipTransferred(address,address)",
+      "topic0": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+      "enabled": true
+    },
+    {
+      "id": "share.transfer_single",
+      "contract": "PropertyShare1155",
+      "address": "0x013f975053770387633caB552311DA591F75692F",
+      "signature": "TransferSingle(address,address,address,uint256,uint256)",
+      "topic0": "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62",
+      "enabled": true
+    },
+    {
+      "id": "share.transfer_batch",
+      "contract": "PropertyShare1155",
+      "address": "0x013f975053770387633caB552311DA591F75692F",
+      "signature": "TransferBatch(address,address,address,uint256[],uint256[])",
+      "topic0": "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb",
+      "enabled": true
+    },
+    {
+      "id": "share.approval_for_all",
+      "contract": "PropertyShare1155",
+      "address": "0x013f975053770387633caB552311DA591F75692F",
+      "signature": "ApprovalForAll(address,address,bool)",
+      "topic0": "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31",
+      "enabled": true
+    },
+    {
+      "id": "share.base_uri_updated",
+      "contract": "PropertyShare1155",
+      "address": "0x013f975053770387633caB552311DA591F75692F",
+      "signature": "BaseURIUpdated(string)",
+      "topic0": "0x6741b2fc379fad678116fe3d4d4b9a1a184ab53ba36b86ad0fa66340b1ab41ad",
+      "enabled": true
+    },
+    {
+      "id": "share.uri",
+      "contract": "PropertyShare1155",
+      "address": "0x013f975053770387633caB552311DA591F75692F",
+      "signature": "URI(string,uint256)",
+      "topic0": "0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b",
+      "enabled": true
+    },
+    {
+      "id": "share.ownership_transferred",
+      "contract": "PropertyShare1155",
+      "address": "0x013f975053770387633caB552311DA591F75692F",
+      "signature": "OwnershipTransferred(address,address)",
+      "topic0": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+      "enabled": true
+    },
+    {
+      "id": "tokenizer.class_reserved",
+      "contract": "PropertyTokenizer",
+      "address": "0x516Ff79Fa012e2BF965b2c187470B961b5eba529",
+      "signature": "ClassReserved(bytes32,uint256,uint32)",
+      "topic0": "0x18d0e1ae5bdf2098041611baef18c4ada183c76f399411b88a47041249016d09",
+      "enabled": true
+    },
+    {
+      "id": "tokenizer.units_minted",
+      "contract": "PropertyTokenizer",
+      "address": "0x516Ff79Fa012e2BF965b2c187470B961b5eba529",
+      "signature": "UnitsMinted(bytes32,uint32,uint32,address)",
+      "topic0": "0xa7f425b98d4d6af1e1f4a6d74317b14c0d4b822c1dff9a66104fe1ff95d90c1e",
+      "enabled": true
+    },
+    {
+      "id": "tokenizer.ownership_transferred",
+      "contract": "PropertyTokenizer",
+      "address": "0x516Ff79Fa012e2BF965b2c187470B961b5eba529",
+      "signature": "OwnershipTransferred(address,address)",
+      "topic0": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+      "enabled": true
+    }
+  ]
+}

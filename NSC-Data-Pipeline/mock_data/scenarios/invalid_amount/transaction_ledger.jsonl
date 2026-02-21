@@ -1,0 +1,11 @@
+{"tx_id": "tx_pay_1001", "wallet_id": "user_1", "type": "PAYMENT", "amount": "100.00", "related_id": "po_1001", "created_at": "2026-02-01T00:00:00Z"}
+{"tx_id": "tx_recv_1001", "wallet_id": "user_2", "type": "RECEIVE", "amount": "100.00", "related_id": "po_1001", "created_at": "2026-02-01T00:00:00Z"}
+{"tx_id": "tx_pay_1002", "wallet_id": "user_1", "type": "PAYMENT", "amount": "110.00", "related_id": "po_1002", "created_at": "2026-02-01T00:01:00Z"}
+{"tx_id": "tx_recv_1002", "wallet_id": "user_2", "type": "RECEIVE", "amount": "110.00", "related_id": "po_1002", "created_at": "2026-02-01T00:01:00Z"}
+{"tx_id": "tx_pay_1003", "wallet_id": "user_1", "type": "PAYMENT", "amount": "120.00", "related_id": "po_1003", "created_at": "2026-02-01T00:02:00Z"}
+{"tx_id": "tx_recv_1003", "wallet_id": "user_2", "type": "RECEIVE", "amount": "120.00", "related_id": "po_1003", "created_at": "2026-02-01T00:02:00Z"}
+{"tx_id": "tx_pay_1004", "wallet_id": "user_1", "type": "PAYMENT", "amount": "130.00", "related_id": "po_1004", "created_at": "2026-02-01T00:03:00Z"}
+{"tx_id": "tx_recv_1004", "wallet_id": "user_2", "type": "RECEIVE", "amount": "130.00", "related_id": "po_1004", "created_at": "2026-02-01T00:03:00Z"}
+{"tx_id": "tx_bad_amount_none", "wallet_id": "user_1", "type": "PAYMENT", "amount": null, "related_id": "po_bad_amount_none", "created_at": "2026-02-01T00:00:00Z"}
+{"tx_id": "tx_bad_amount_zero", "wallet_id": "user_1", "type": "PAYMENT", "amount": "0.00", "related_id": "po_bad_amount_zero", "created_at": "2026-02-01T00:00:00Z"}
+{"tx_id": "tx_bad_amount_negative", "wallet_id": "user_1", "type": "PAYMENT", "amount": "-10.00", "related_id": "po_bad_amount_negative", "created_at": "2026-02-01T00:00:00Z"}

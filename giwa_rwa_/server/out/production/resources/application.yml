@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: rwa-server
+  config:
+    import: optional:file:.env[.properties],optional:file:server/.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/rwa}
+    username: ${DB_USER:rwa}
+    password: ${DB_PASSWORD:rwa_password}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+rwa:
+  shared-dir-path: ${SHARED_DIR_PATH:../shared}
+  giwa-rpc-url: ${GIWA_RPC_URL:https://sepolia-rpc.giwa.io}
+  giwa-chain-id: ${GIWA_CHAIN_ID:91342}
+  master-key-base64: ${MASTER_KEY_BASE64:}
+  issuer-private-key: ${ISSUER_PRIVATE_KEY:}
+  treasury-private-key: ${TREASURY_PRIVATE_KEY:}
+  admin-api-token: ${ADMIN_API_TOKEN:}
+  nonce-lock-timeout-ms: ${NONCE_LOCK_TIMEOUT_MS:5000}
+  tx:
+    confirmations: ${TX_CONFIRMATIONS:12}
+    polling-interval-ms: ${TX_POLLING_INTERVAL_MS:5000}
+    default-gas-limit: ${TX_DEFAULT_GAS_LIMIT:800000}
+  outbox:
+    kafka-enabled: ${OUTBOX_KAFKA_ENABLED:true}
+    default-topic: ${OUTBOX_DEFAULT_TOPIC:server.domain.events}
+    retry-min-age-minutes: ${OUTBOX_RETRY_MIN_AGE_MINUTES:10}
+    max-attempts: ${OUTBOX_MAX_ATTEMPTS:30}
+    retry-interval-ms: ${OUTBOX_RETRY_INTERVAL_MS:60000}
+    lock-ttl-seconds: ${OUTBOX_LOCK_TTL_SECONDS:300}
+    claim-batch-size: ${OUTBOX_CLAIM_BATCH_SIZE:100}
+    backoff-seconds: ${OUTBOX_BACKOFF_SECONDS:60}
+    publisher-executor:
+      core-pool-size: ${OUTBOX_PUBLISHER_CORE_POOL_SIZE:4}
+      max-pool-size: ${OUTBOX_PUBLISHER_MAX_POOL_SIZE:8}
+      queue-capacity: ${OUTBOX_PUBLISHER_QUEUE_CAPACITY:200}

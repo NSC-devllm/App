@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group = 'io.rwa'
+version = '0.0.1'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+defaultTasks 'clean', 'build'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.kafka:kafka-clients:3.7.1'
+    implementation 'org.web3j:core:4.14.0'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

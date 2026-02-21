@@ -1,0 +1,103 @@
+# --- OS / Desktop artifacts ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Environment & secret files ---
+.env
+.env.*
+**/*.env
+**/*.env.*
+server/.env
+!.env.example
+!**/.env.example
+!server/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.asc
+.npmrc
+npmrc
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+*.sln.docstates
+*.swp
+*.swo
+*~
+
+# --- Node.js / Hardhat / frontend ---
+node_modules/
+coverage/
+artifacts/
+cache/
+typechain/
+typechain-types/
+.hardhat/
+.openzeppelin/
+contracts/ignition/deployments/chain-*/
+
+# --- Java / Gradle ---
+.gradle/
+build/
+**/build/
+# --- Java binaries and temp outputs ---
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+!server/gradle/wrapper/gradle-wrapper.jar
+
+# --- Server / module-specific generated dirs ---
+server/build/
+ingester/build/
+flink/build/
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+logs/
+
+# --- Test/database local data ---
+/tmp/
+*.sqlite
+*.sqlite3
+postgres-data/
+pg-data/
+
+# --- Temporary files ---
+*.tmp
+*.temp
+*.bak
+
+# --- Local docker overrides ---
+docker-compose.override.yml
+
+# --- Local application configs (contains secrets in many setups) ---
+**/application-local.yml
+**/application-local.yaml
+**/application-dev.yml
+**/application-dev.yaml
+**/application-test.yml
+**/application-test.yaml
+**/application-secret.yml
+**/application-secret.yaml
+**/application-*.properties
+
+
+# Wallet outputs (never commit wallet artifacts)
+shared/wallets/**
+!shared/wallets/.gitkeep

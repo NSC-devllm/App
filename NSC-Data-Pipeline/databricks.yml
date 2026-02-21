@@ -1,0 +1,691 @@
+bundle:
+  name: data-pipeline
+
+variables:
+  catalog:
+    description: Unity Catalog name
+  cluster_policy_id:
+    description: Cluster policy id
+  rule_load_mode:
+    description: Runtime rule load mode for Pipeline A/B/Silver (strict|fallback)
+  rule_table:
+    description: Runtime rule table name for Pipeline A/B/Silver
+  rule_seed_path:
+    description: Fallback seed path for Pipeline A/B/Silver
+targets:
+  dev:
+    default: true
+    variables:
+      catalog: hive_metastore
+      cluster_policy_id: "000C31E193543DF5"
+      rule_load_mode: fallback
+      rule_table: gold.dim_rule_scd2
+      rule_seed_path: mock_data/fixtures/dim_rule_scd2.json
+
+  prod:
+    variables:
+      catalog: prod_catalog
+      cluster_policy_id: "<prod-cluster-policy-id>"
+      rule_load_mode: strict
+      rule_table: gold.dim_rule_scd2
+      rule_seed_path: mock_data/fixtures/dim_rule_scd2.json
+
+resources:
+  jobs:
+    pipeline_a_guardrail:
+      name: data-pipeline-a-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      schedule:
+        quartz_cron_expression: "0 0/10 * * * ?"
+        timezone_id: Asia/Seoul
+      email_notifications:
+        on_failure:
+          - 2dt026@msacademy.msai.kr
+      parameters:
+        - name: run_mode
+          default: incremental
+        - name: start_ts
+          default: ""
+        - name: end_ts
+          default: ""
+        - name: date_kst_start
+          default: ""
+        - name: date_kst_end
+          default: ""
+        - name: run_id
+          default: ""
+        - name: rule_load_mode
+          default: ${var.rule_load_mode}
+        - name: rule_table
+          default: ${var.rule_table}
+        - name: rule_seed_path
+          default: ${var.rule_seed_path}
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: run_pipeline_a
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_a.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+
+    pipeline_b_controls:
+      name: data-pipeline-b-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      schedule:
+        quartz_cron_expression: "0 20 0 * * ?"
+        timezone_id: Asia/Seoul
+      email_notifications:
+        on_failure:
+          - 2dt026@msacademy.msai.kr
+      parameters:
+        - name: run_mode
+          default: ""
+        - name: start_ts
+          default: ""
+        - name: end_ts
+          default: ""
+        - name: date_kst_start
+          default: ""
+        - name: date_kst_end
+          default: ""
+        - name: run_id
+          default: ""
+        - name: rule_load_mode
+          default: ${var.rule_load_mode}
+        - name: rule_table
+          default: ${var.rule_table}
+        - name: rule_seed_path
+          default: ${var.rule_seed_path}
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: pipeline_b_recon
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_b.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--task"
+              - "recon"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+        - task_key: pipeline_b_supply_ops
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_b.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--task"
+              - "supply_ops"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+        - task_key: pipeline_b_finalize_success
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          depends_on:
+            - task_key: pipeline_b_recon
+            - task_key: pipeline_b_supply_ops
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_b.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--task"
+              - "finalize_success"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+        - task_key: pipeline_b_finalize_failure
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          depends_on:
+            - task_key: pipeline_b_recon
+            - task_key: pipeline_b_supply_ops
+          run_if: AT_LEAST_ONE_FAILED
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_b.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--task"
+              - "finalize_failure"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+
+    pipeline_c_analytics:
+      name: data-pipeline-c-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      schedule:
+        quartz_cron_expression: "0 35 0 * * ?"
+        timezone_id: Asia/Seoul
+      email_notifications:
+        on_failure:
+          - 2dt026@msacademy.msai.kr
+      parameters:
+        - name: run_mode
+          default: ""
+        - name: start_ts
+          default: ""
+        - name: end_ts
+          default: ""
+        - name: date_kst_start
+          default: ""
+        - name: date_kst_end
+          default: ""
+        - name: run_id
+          default: ""
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: run_pipeline_c
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_c.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+
+    pipeline_silver_materialization:
+      name: data-pipeline-silver-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      schedule:
+        quartz_cron_expression: "0 0 0 * * ?"
+        timezone_id: Asia/Seoul
+      email_notifications:
+        on_failure:
+          - 2dt026@msacademy.msai.kr
+      parameters:
+        - name: run_mode
+          default: ""
+        - name: start_ts
+          default: ""
+        - name: end_ts
+          default: ""
+        - name: date_kst_start
+          default: ""
+        - name: date_kst_end
+          default: ""
+        - name: run_id
+          default: ""
+        - name: rule_load_mode
+          default: ${var.rule_load_mode}
+        - name: rule_table
+          default: ${var.rule_table}
+        - name: rule_seed_path
+          default: ${var.rule_seed_path}
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: run_pipeline_silver
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_silver.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+
+    bad_records_retention_cleanup:
+      name: data-pipeline-bad-records-cleanup-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      schedule:
+        quartz_cron_expression: "0 50 0 1 * ?"
+        timezone_id: Asia/Seoul
+      email_notifications:
+        on_failure:
+          - 2dt026@msacademy.msai.kr
+      parameters:
+        - name: retention_days
+          default: "180"
+        - name: dry_run
+          default: "false"
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: cleanup_bad_records
+          retry_on_timeout: true
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/ops/cleanup_bad_records.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--retention-days"
+              - "{{job.parameters.retention_days}}"
+              - "--dry-run"
+              - "{{job.parameters.dry_run}}"
+
+    e2e_setup_mock_data:
+      name: data-pipeline-e2e-setup-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      parameters:
+        - name: scenario
+          default: ""
+        - name: run_id
+          default: ""
+      job_clusters:
+        - job_cluster_key: policy_cluster
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: setup_e2e_env
+          job_cluster_key: policy_cluster
+          spark_python_task:
+            python_file: scripts/e2e/setup_e2e_env.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--scenario"
+              - "{{job.parameters.scenario}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--drop-existing"
+
+    e2e_cleanup_mock_data:
+      name: data-pipeline-e2e-cleanup-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      parameters:
+        - name: drop_schemas
+          default: "0"
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: cleanup_e2e_env
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/e2e/cleanup_e2e_env.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--drop-schemas"
+              - "{{job.parameters.drop_schemas}}"
+
+    bootstrap_catalog:
+      name: data-pipeline-bootstrap-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 600
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: bootstrap_schemas_and_tables
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/bootstrap_catalog.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+
+    sync_dim_rule_scd2:
+      name: data-pipeline-sync-rules-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 600
+      parameters:
+        - name: seed_path
+          default: "mock_data/fixtures/dim_rule_scd2.json"
+        - name: table_name
+          default: "gold.dim_rule_scd2"
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: sync_rule_table
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/sync_dim_rule_scd2.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--seed-path"
+              - "{{job.parameters.seed_path}}"
+              - "--table-name"
+              - "{{job.parameters.table_name}}"
+
+    e2e_full_pipeline:
+      name: data-pipeline-e2e-full-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      parameters:
+        - name: run_mode
+          default: incremental
+        - name: start_ts
+          default: ""
+        - name: end_ts
+          default: ""
+        - name: date_kst_start
+          default: ""
+        - name: date_kst_end
+          default: ""
+        - name: run_id
+          default: ""
+        - name: rule_load_mode
+          default: ${var.rule_load_mode}
+        - name: rule_table
+          default: ${var.rule_table}
+        - name: rule_seed_path
+          default: ${var.rule_seed_path}
+      job_clusters:
+        - job_cluster_key: policy_single_node
+          new_cluster:
+            spark_version: "16.4.x-scala2.12"
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+            node_type_id: Standard_DS3_v2
+            policy_id: ${var.cluster_policy_id}
+      tasks:
+        - task_key: sync_rules
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/sync_dim_rule_scd2.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+              - "--table-name"
+              - "{{job.parameters.rule_table}}"
+        - task_key: pipeline_a
+          depends_on:
+            - task_key: sync_rules
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_a.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+        - task_key: pipeline_silver
+          depends_on:
+            - task_key: pipeline_a
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_silver.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+        - task_key: pipeline_b
+          depends_on:
+            - task_key: pipeline_silver
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_b.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"
+              - "--rule-load-mode"
+              - "{{job.parameters.rule_load_mode}}"
+              - "--rule-table"
+              - "{{job.parameters.rule_table}}"
+              - "--rule-seed-path"
+              - "{{job.parameters.rule_seed_path}}"
+        - task_key: pipeline_c
+          depends_on:
+            - task_key: pipeline_silver
+          job_cluster_key: policy_single_node
+          spark_python_task:
+            python_file: scripts/run_pipeline_c.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--run-mode"
+              - "{{job.parameters.run_mode}}"
+              - "--start-ts"
+              - "{{job.parameters.start_ts}}"
+              - "--end-ts"
+              - "{{job.parameters.end_ts}}"
+              - "--date-kst-start"
+              - "{{job.parameters.date_kst_start}}"
+              - "--date-kst-end"
+              - "{{job.parameters.date_kst_end}}"
+              - "--run-id"
+              - "{{job.parameters.run_id}}"

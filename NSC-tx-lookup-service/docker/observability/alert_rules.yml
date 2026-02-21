@@ -1,0 +1,116 @@
+# Alert Rules Reference - tx-lookup-service
+# ===========================================
+#
+# Platform-agnostic alert rule definitions.
+# Maps OpenTelemetry metric names to threshold/severity decisions.
+#
+# Decisions: DEC-010 (baseline thresholds), DEC-202 (severity)
+# Spec: .specs/backoffice_project_specs.md section 8
+#
+# Deployment:
+#   - Azure Monitor: translate to Scheduled Query Rules (Bicep/Portal) using KQL
+#   - Prometheus: translate to alerting rules using PromQL
+#
+# Metric sources:
+#   - src/common/metrics.py       (api_*, db_*)
+#   - src/consumer/metrics.py     (consumer_*, pairing_*)
+
+rules:
+  # --- API ---
+
+  - name: ApiLatencyHigh
+    metric: api_request_latency_seconds
+    condition: "p95 > 0.2"
+    window: 5m
+    severity: warning
+    description: "API p95 latency exceeds 200ms SLO"
+    kql: |
+      customMetrics
+      | where name == "api_request_latency_seconds"
+      | summarize p95=percentile(value, 95) by bin(timestamp, 5m)
+      | where p95 > 0.2
+
+  - name: ApiErrorRateHigh
+    metric: api_requests_total
+    condition: "rate(status_code=~'4..|5..') / rate(total) > 0.02"
+    window: 5m
+    severity: warning
+    description: "API 4xx/5xx error rate exceeds 2%"
+    kql: |
+      customMetrics
+      | where name == "api_requests_total"
+      | extend sc = tostring(customDimensions["status_code"])
+      | summarize
+          errors = countif(sc startswith "4" or sc startswith "5"),
+          total = count()
+          by bin(timestamp, 5m)
+      | where total > 0
+      | where todouble(errors) / todouble(total) > 0.02
+
+  # --- Data freshness ---
+
+  - name: DataFreshnessHigh
+    metric: consumer_freshness_seconds
+    condition: "> 5"
+    window: 5m
+    severity: critical
+    description: "End-to-end data freshness exceeds 5s SLO (DEC-202: critical)"
+    kql: |
+      customMetrics
+      | where name == "consumer_freshness_seconds"
+      | summarize max_freshness = max(value) by bin(timestamp, 5m)
+      | where max_freshness > 5
+
+  # --- DLQ ---
+
+  - name: DlqActivity
+    metric: consumer_dlq_total
+    condition: "> 0"
+    window: 5m
+    severity: warning
+    description: "DLQ writes detected - processing errors occurring"
+    kql: |
+      customMetrics
+      | where name == "consumer_dlq_total"
+      | summarize dlq_count = sum(value) by bin(timestamp, 5m)
+      | where dlq_count > 0
+
+  # --- DB connection pool ---
+
+  - name: DbPoolExhausted
+    metric: db_pool_checked_out
+    condition: ">= pool_size + max_overflow"
+    window: 5m
+    severity: warning
+    description: "DB connection pool is fully exhausted (default threshold: 15)"
+    kql: |
+      customMetrics
+      | where name == "db_pool_checked_out"
+      | summarize max_out = max(value) by bin(timestamp, 5m)
+      | where max_out >= 15
+
+  - name: DbPoolCheckoutSlow
+    metric: db_pool_checkout_latency_seconds
+    condition: "p95 > 1.0"
+    window: 5m
+    severity: warning
+    description: "Connection pool checkout latency p95 exceeds 1s"
+    kql: |
+      customMetrics
+      | where name == "db_pool_checkout_latency_seconds"
+      | summarize p95 = percentile(value, 95) by bin(timestamp, 5m)
+      | where p95 > 1.0
+
+  # --- DB replication lag ---
+
+  - name: DbReplicationLagHigh
+    metric: db_replication_lag_seconds
+    condition: "> 10"
+    window: 5m
+    severity: critical
+    description: "DB replication lag exceeds 10s"
+    kql: |
+      customMetrics
+      | where name == "db_replication_lag_seconds"
+      | summarize max_lag = max(value) by bin(timestamp, 5m)
+      | where max_lag > 10

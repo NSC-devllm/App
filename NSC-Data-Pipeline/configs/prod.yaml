@@ -1,0 +1,23 @@
+environment: prod
+
+databricks:
+  workspace_host: https://<prod-workspace-host>
+  workspace_id: "<prod-workspace-id>"
+  catalog: prod_catalog
+  bronze_schema: bronze
+  silver_schema: silver
+  gold_schema: gold
+  cluster_policy_id: "<prod-cluster-policy-id>"
+  existing_cluster_id: "<prod-cluster-id-or-null>"
+
+storage:
+  external_location: "<prod-external-location>"
+  base_path: "abfss://<container>@<storage-account>.dfs.core.windows.net"
+
+analytics:
+  secret_scope: "<prod-secret-scope>"
+
+jobs:
+  pipeline_a_job_id: "<prod-pipeline-a-job-id>"
+  pipeline_b_job_id: "<prod-pipeline-b-job-id>"
+  pipeline_c_job_id: "<prod-pipeline-c-job-id>"

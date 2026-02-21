@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+
+databases
+aiosqlite
+httpx
+pytest

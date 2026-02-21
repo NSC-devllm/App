@@ -1,0 +1,4 @@
+{"product_id": 9001, "product_name": "Widget 1", "price_krw": "100.00", "stock_quantity": 10, "category": "category_1", "is_display": true}
+{"product_id": 9002, "product_name": "Widget 2", "price_krw": "110.00", "stock_quantity": 11, "category": "category_2", "is_display": true}
+{"product_id": 9003, "product_name": "Widget 3", "price_krw": "120.00", "stock_quantity": 12, "category": "category_3", "is_display": true}
+{"product_id": 9004, "product_name": "Widget 4", "price_krw": "130.00", "stock_quantity": 13, "category": "category_1", "is_display": true}

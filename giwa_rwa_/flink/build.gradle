@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+}
+
+group = 'io.rwa'
+version = '0.0.1'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+defaultTasks 'clean', 'build'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.flink:flink-java:1.20.0'
+    implementation 'org.apache.flink:flink-streaming-java:1.20.0'
+    implementation 'org.postgresql:postgresql:42.7.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

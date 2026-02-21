@@ -1,0 +1,32 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  postgres:
+    image: postgres:17.7
+    environment:
+      POSTGRES_USER: rwa
+      POSTGRES_PASSWORD: rwa_password
+      POSTGRES_DB: rwa
+    ports:
+      - "5432:5432"
+
+  flink:
+    image: flink:1.20.0-java17
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink

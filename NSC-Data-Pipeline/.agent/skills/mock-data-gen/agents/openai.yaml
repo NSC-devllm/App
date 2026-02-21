@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mock Data Generator"
+  short_description: "Generate fixtures and mock_data scenarios from data contracts."
+  default_prompt: "Generate mock test data from .specs/data_contract.md for a table or scenario, including edge/error cases."

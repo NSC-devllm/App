@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naver Shopping Mall</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+        }
+
+        .product-img {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            height: 250px;
+            background: #ddd;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #888;
+        }
+
+        h2 {
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .price {
+            font-size: 1.5rem;
+            color: #03C75A;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #03C75A;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: #02b351;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <div class="product-img">👟</div>
+        <h2>Nike Air Force 1</h2>
+        <p style="color: #666;">Classic White / Size 270</p>
+        <div class="price">50,000 KRW</div>
+        <button id="buyBtn" onclick="buyProduct()">Buy Now</button>
+    </div>
+
+    <script>
+        async function buyProduct() {
+            const btn = document.getElementById('buyBtn');
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            try {
+                const response = await fetch('/api/purchase', { method: 'POST' });
+                const text = await response.text();
+
+                if (text.includes("Successful")) {
+                    alert("✅ Purchase Successful! \n\nPlease check your Wallet balance.");
+                } else {
+                    alert("❌ " + text);
+                }
+            } catch (error) {
+                alert("Error connecting to server");
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Buy Now";
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,2 @@
+{"tx_id": "tx_hold_1", "wallet_id": "user_1", "type": "HOLD", "amount": "100.00", "related_id": "po_hold_1", "created_at": "2026-02-01T00:00:00Z"}
+{"tx_id": "tx_release_1", "wallet_id": "user_1", "type": "RELEASE", "amount": "100.00", "related_id": "po_hold_1", "created_at": "2026-02-01T00:00:00Z"}

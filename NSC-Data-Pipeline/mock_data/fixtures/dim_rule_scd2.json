@@ -1,0 +1,107 @@
+[
+  {
+    "rule_id": "dq_freshness_default",
+    "domain": "dq",
+    "metric": "freshness_sec",
+    "threshold": 300,
+    "severity_map": {
+      "warn": 300,
+      "crit": 600
+    },
+    "comment": "Source-specific SLO adjustments may apply."
+  },
+  {
+    "rule_id": "dq_dup_txid_default",
+    "domain": "dq",
+    "metric": "dup_rate_tx_id",
+    "threshold": 0.001,
+    "severity_map": {
+      "warn": 0.001,
+      "crit": 0.01
+    },
+    "comment": "tx_id duplicate rate threshold."
+  },
+  {
+    "rule_id": "dq_completeness_zero_windows_v1",
+    "domain": "dq",
+    "metric": "completeness_zero_windows",
+    "threshold": 3,
+    "severity_map": {
+      "warn": 1,
+      "crit": 3
+    },
+    "comment": "Consecutive zero-count windows for completeness."
+  },
+  {
+    "rule_id": "dq_contract_bad_records_default",
+    "domain": "dq",
+    "metric": "contract_bad_records_rate",
+    "threshold": 0.01,
+    "severity_map": {
+      "warn": 0.001,
+      "crit": 0.01
+    },
+    "comment": "Contract violations rate in Guardrail."
+  },
+  {
+    "rule_id": "ledger_recon_abs_default",
+    "domain": "ledger",
+    "metric": "drift_abs",
+    "threshold": 0,
+    "severity_map": {
+      "crit": 0
+    },
+    "comment": "Non-zero drift is considered mismatch (initial draft)."
+  },
+  {
+    "rule_id": "ledger_supply_diff_default",
+    "domain": "ledger",
+    "metric": "supply_diff_abs",
+    "threshold": 0,
+    "severity_map": {
+      "crit": 0
+    },
+    "comment": "Supply diff tolerance set to zero by default."
+  },
+  {
+    "rule_id": "silver_bad_records_default",
+    "domain": "silver",
+    "metric": "bad_records_rate",
+    "threshold": 0.01,
+    "severity_map": {
+      "fail": 0.01
+    },
+    "comment": "Fail-fast if bad record rate exceeds 1%."
+  },
+  {
+    "rule_id": "silver_entry_type_allowed_v1",
+    "domain": "silver",
+    "metric": "entry_type_allowed",
+    "allowed_values": [
+      "CHARGE",
+      "WITHDRAW",
+      "PAYMENT",
+      "RECEIVE",
+      "REFUND_OUT",
+      "REFUND_IN",
+      "HOLD",
+      "RELEASE",
+      "MINT",
+      "BURN"
+    ],
+    "comment": "Allowed ledger entry types (mock baseline)."
+  },
+  {
+    "rule_id": "silver_payment_status_allowed_v1",
+    "domain": "silver",
+    "metric": "payment_status_allowed",
+    "allowed_values": [
+      "PAID",
+      "PENDING",
+      "FAILED",
+      "CANCELLED",
+      "REFUNDED"
+    ],
+    "comment": "Allowed payment order statuses (initial baseline)."
+  }
+]

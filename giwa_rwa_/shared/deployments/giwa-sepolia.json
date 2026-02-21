@@ -1,0 +1,12 @@
+{
+  "network": "giwaSepolia",
+  "chainId": 91342,
+  "deployedAt": "2026-02-15T08:28:32.422Z",
+  "contracts": {
+    "MockUSD": "0x336Ff3629dE73804bad107d6291cD54EC538E7a3",
+    "PropertyRegistry": "0x7063D25b17FC4df908531EC7B9f7D9041ADDDbdc",
+    "PropertyShare1155": "0x013f975053770387633caB552311DA591F75692F",
+    "PropertyTokenizer": "0x516Ff79Fa012e2BF965b2c187470B961b5eba529",
+    "FixedPriceMarketDvP": "0x364efa0edc35e2a49D6f112F6CaE28e9Cc51e8C3"
+  }
+}

@@ -1,0 +1,24 @@
+target-version = "py313"
+line-length = 88
+
+exclude = [
+  ".agent",
+  ".agents",
+  ".claude",
+  ".codex",
+  ".env",
+  ".venv",
+]
+
+[lint]
+select = ["E", "F", "I"]
+ignore = [
+  # Handled by the formatter (and may be unavoidable for long URLs, etc.).
+  "E501",
+]
+
+[lint.isort]
+known-first-party = ["src"]
+
+[lint.per-file-ignores]
+"tests/integration/test_pipeline_c_pyspark_integration.py" = ["E402"]

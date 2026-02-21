@@ -1,0 +1,4 @@
+{"item_id": 5001, "order_id": 1001, "product_id": 9001, "quantity": 1, "price_at_purchase": "100.00"}
+{"item_id": 5002, "order_id": 1002, "product_id": 9002, "quantity": 2, "price_at_purchase": "110.00"}
+{"item_id": 5003, "order_id": 1003, "product_id": 9003, "quantity": 3, "price_at_purchase": "120.00"}
+{"item_id": 5004, "order_id": 1004, "product_id": 9001, "quantity": 1, "price_at_purchase": "130.00"}

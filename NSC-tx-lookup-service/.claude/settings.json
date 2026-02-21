@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"$PWD/AGENTS.md\" 2>/dev/null | jq -Rs '{hookSpecificOutput: {hookEventName: \"SessionStart\", additionalContext: .}}' || echo '{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": \"AGENTS.md not found\"}}'"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true
+  }
+}
