@@ -55,6 +55,8 @@ def test_logging_middleware_logs_request_and_response(caplog) -> None:
 def test_logging_middleware_masks_sensitive_query_values(
     monkeypatch: pytest.MonkeyPatch, caplog
 ) -> None:
+    monkeypatch.setenv("AUDIT_MASK_QUERY_KEYS", "access_token,token")
+
     app = FastAPI()
     register_observability(app)
 
@@ -62,7 +64,6 @@ def test_logging_middleware_masks_sensitive_query_values(
     async def ping() -> dict[str, bool]:
         return {"ok": True}
 
-    monkeypatch.setenv("AUDIT_MASK_QUERY_KEYS", "access_token,token")
     caplog.set_level(logging.INFO, logger="src.api.observability")
 
     with TestClient(app) as client:
@@ -84,6 +85,41 @@ def test_logging_middleware_masks_sensitive_query_values(
     assert "query=access_token=%2A%2A%2A&foo=bar" in request_logs[0]
     assert len(response_logs) == 1
     assert "query=access_token=%2A%2A%2A&foo=bar" in response_logs[0]
+
+
+def test_logging_middleware_uses_default_masking_when_config_empty(
+    monkeypatch: pytest.MonkeyPatch, caplog
+) -> None:
+    monkeypatch.setenv("AUDIT_MASK_QUERY_KEYS", "")
+
+    app = FastAPI()
+    register_observability(app)
+
+    @app.get("/ping")
+    async def ping() -> dict[str, bool]:
+        return {"ok": True}
+
+    caplog.set_level(logging.INFO, logger="src.api.observability")
+
+    with TestClient(app) as client:
+        response = client.get("/ping?token=secret&foo=bar")
+
+    assert response.status_code == 200
+
+    messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "src.api.observability"
+    ]
+    request_logs = [message for message in messages if message.startswith("api_request")]
+    response_logs = [
+        message for message in messages if message.startswith("api_response")
+    ]
+
+    assert len(request_logs) == 1
+    assert "query=token=%2A%2A%2A&foo=bar" in request_logs[0]
+    assert len(response_logs) == 1
+    assert "query=token=%2A%2A%2A&foo=bar" in response_logs[0]
 
 
 def test_logging_middleware_keeps_correlation_id_context(
