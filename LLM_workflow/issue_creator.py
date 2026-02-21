@@ -50,9 +50,18 @@ def _github_get(url: str, params: dict[str, Any] | None = None) -> dict[str, Any
         return None
 
 
-def get_latest_commit() -> dict[str, Any] | None:
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/commits/main"
-    return _github_get(url)
+def get_recent_commits(limit: int = 30) -> list[dict[str, Any]]:
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/commits"
+    data = _github_get(
+        url,
+        params={
+            "sha": "main",
+            "per_page": max(1, min(limit, 100)),
+        },
+    )
+    if isinstance(data, list):
+        return data
+    return []
 
 
 def get_commit_details(sha: str) -> dict[str, Any] | None:
@@ -179,30 +188,60 @@ def handle_commit(commit_data: dict[str, Any]) -> None:
     create_github_issue(title, body)
 
 
+def _commit_sha(commit_data: dict[str, Any]) -> str:
+    return str(commit_data.get("sha", "") or "")
+
+
+def collect_new_commits(
+    recent_commits: list[dict[str, Any]], last_seen_sha: str
+) -> list[dict[str, Any]]:
+    if not recent_commits:
+        return []
+
+    if not last_seen_sha:
+        return [recent_commits[0]]
+
+    for index, commit_data in enumerate(recent_commits):
+        if _commit_sha(commit_data) == last_seen_sha:
+            # Process oldest -> newest so issue creation order follows commit order.
+            return list(reversed(recent_commits[:index]))
+
+    print(
+        f"[WARN] Last seen commit {last_seen_sha[:7]} is outside fetched window. "
+        "Processing latest commit only."
+    )
+    return [recent_commits[0]]
+
+
 def main_loop() -> None:
     print("=" * 60)
     print(f"[CREATOR] Monitoring main commits in [{GITHUB_REPO}] every {POLL_INTERVAL}s.")
     print("[CREATOR] New commits will generate Gemini review issues.")
     print("=" * 60)
 
-    latest = get_latest_commit()
-    if latest is None:
+    recent_commits = get_recent_commits()
+    if not recent_commits:
         print("[WARN] Initial commit lookup failed.")
         last_seen_sha = ""
     else:
-        last_seen_sha = latest.get("sha", "")
+        latest = recent_commits[0]
+        last_seen_sha = _commit_sha(latest)
         print(f"[INIT] Latest commit: {last_seen_sha[:7] if last_seen_sha else '-'}")
         handle_commit(latest)
 
     while True:
         try:
-            latest = get_latest_commit()
-            if latest is not None:
-                current_sha = latest.get("sha", "")
-                if current_sha and current_sha != last_seen_sha:
+            recent_commits = get_recent_commits()
+            if recent_commits:
+                new_commits = collect_new_commits(recent_commits, last_seen_sha)
+                for commit_data in new_commits:
+                    current_sha = _commit_sha(commit_data)
                     print(f"[NEW COMMIT] {current_sha[:7]}")
-                    handle_commit(latest)
-                    last_seen_sha = current_sha
+                    handle_commit(commit_data)
+
+                latest_sha = _commit_sha(recent_commits[0])
+                if latest_sha:
+                    last_seen_sha = latest_sha
             time.sleep(POLL_INTERVAL)
         except KeyboardInterrupt:
             print("\n[STOP] Commit monitoring stopped by user.")
